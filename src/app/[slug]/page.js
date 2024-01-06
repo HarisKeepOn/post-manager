@@ -9,7 +9,7 @@ export const metadata = {
     "Discover detailed information about a single post with the Posts Manager. Explore and manage your posts effortlessly. View user ID, post ID, title, and body. Your central hub for organized and accessible post details.",
 };
 
-export default async function page({ params: { slug } }) {
+export default async function Post({ params: { slug } }) {
   const postData = await useSinglePost(slug);
 
   return (
