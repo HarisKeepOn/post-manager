@@ -71,7 +71,7 @@ Builds the project for production.
 
 ## Hosted Project
 
-The project is hosted on [https://your-hosted-url.com](https://your-hosted-url.com).
+The project is hosted on [https://post-manager-jade.vercel.app](https://post-manager-jade.vercel.app/).
 
 ## License
 
