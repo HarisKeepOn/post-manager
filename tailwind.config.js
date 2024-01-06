@@ -15,4 +15,7 @@ module.exports = {
     },
   },
   plugins: [],
+  corePlugins: {
+    arbitraryValue: true,
+  },
 }

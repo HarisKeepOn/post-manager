@@ -1,113 +1,221 @@
-import Image from 'next/image'
+"use client";
+import CustomPagination from "@/components/CustomPagination";
+import Constants from "@/constants";
+import { usePagination } from "@/custom-hooks/usePagination";
+import { usePosts } from "@/custom-hooks/usePosts";
+import { isPostSaved, removePost, savePost, truncateText } from "@/utils";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { Bookmark, RefreshCcw, Search, Trash } from "react-feather";
 
 export default function Home() {
+  const { posts, isLoading, isError, goToPage, setSearchTerm, searchTerm } =
+    usePosts();
+
+  const { currentPage, totalPages, handlePageChange } = usePagination(
+    1,
+    10,
+    goToPage
+  );
+
+  const [searchTermState, setSearchTermState] = useState(searchTerm ?? "");
+  const [data, setData] = useState([]);
+
+  useEffect(() => {
+    if (!isLoading && posts && posts.length > 0) {
+      const fetchedPosts = posts ?? [];
+      const postsInStorage = JSON.parse(
+        localStorage.getItem(Constants.POSTS_STORAGE_KEY)
+      );
+      if (postsInStorage) {
+        // map through the data and if the post is saved, set the isPostSaved property to true otherwise set it to false
+        const updatedPosts = fetchedPosts.map((post) => {
+          const isPostSaved = postsInStorage.some(
+            (item) => item.id === post.id
+          );
+          return { ...post, isPostSaved };
+        });
+        setData(updatedPosts);
+      } else {
+        setData(fetchedPosts);
+      }
+    } else {
+      setData([]);
+    }
+  }, [posts]);
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.js</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <main className="flex min-h-screen flex-col items-center justify-center">
+      <h1 className="text-3xl font-bold text-white-900 mb-4">Posts Manager</h1>
+      <div className="flex flex-col items-center">
+        <div className="flex justify-between w-full mb-2">
+          <Link
+            className="px-3 py-3 rounded cursor-pointer text-blue-500 hover:bg-blue-900 hover:text-white
+              bg-blue-100 mr-4"
+            href="/bookmarks"
           >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
+            <span className=" text-sm font-medium">View Bookmarked Posts</span>
+          </Link>
+
+          <div className="flex justify-end   items-center gap-2">
+            <input
+              type="text"
+              placeholder="Enter exact Title (case sensitive) to search"
+              value={searchTermState}
+              className="px-3 py-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 w-96"
+              onChange={(e) => setSearchTermState(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  setSearchTerm(searchTermState);
+                }
+              }}
             />
-          </a>
+            <button
+              className="px-3 py-3 rounded cursor-pointer text-blue-500 hover:bg-blue-900 hover:text-white 
+              bg-blue-100"
+              onClick={(e) => {
+                e.preventDefault();
+                setSearchTerm(searchTermState);
+              }}
+            >
+              <Search size={16} />
+            </button>
+
+            <button
+              className="px-3 py-3 rounded cursor-pointer text-blue-500 hover:bg-blue-900 hover:text-white 
+              bg-blue-100"
+              onClick={(e) => {
+                e.preventDefault();
+                setSearchTerm("");
+                setSearchTermState("");
+              }}
+            >
+              <RefreshCcw size={16} />
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
+        {isLoading ? (
+          <div className="flex items-center justify-center">
+            <span className="text-white-500">Loading...</span>
+          </div>
+        ) : isError ? (
+          <p className="text-center text-red-500 bg-red-100 px-3 py-2 rounded">
+            An error has occurred.
           </p>
-        </a>
+        ) : data.length === 0 ? (
+          <p className="text-center text-white-500">No Posts Available</p>
+        ) : (
+          <>
+            <table className="w-full border-collapse divide-y divide-gray-200 rounded-lg overflow-hidden shadow-lg items-start">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th
+                    scope="col"
+                    className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    ID
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Title
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Body
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.map((item, index) => (
+                  <tr key={index} className="bg-white hover:bg-gray-50">
+                    <td className="px-3 py-4 whitespace-nowrap text-center w-20">
+                      <div className="ml-2">
+                        <div className="text-sm font-medium text-gray-900 flex items-center">
+                          {isPostSaved(item.id, data) ? (
+                            <Bookmark
+                              size={16}
+                              className="mr-1 text-green-500"
+                            />
+                          ) : null}
+                          <span
+                            className={`${
+                              isPostSaved(item.id, data)
+                                ? "text-green-500"
+                                : "text-gray-500"
+                            }`}
+                          >
+                            {item.id}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-3 py-4 w-96">
+                      <Link href={`/${item.id}`}>
+                        <div className="ml-2">
+                          <div className="text-sm font-medium text-gray-900 hover:text-blue-500 cursor-pointer">
+                            {item.title}
+                          </div>
+                        </div>
+                      </Link>
+                    </td>
+                    <td className="px-3 py-4 whitespace-nowrap">
+                      <div className="ml-2">
+                        <div className="text-sm text-gray-500 overflow-ellipsis overflow-hidden">
+                          {truncateText(item.body, 40)}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-3 py-4 w-40">
+                      {isPostSaved(item.id, data) ? (
+                        <button
+                          className="text-red-500 hover:text-red-700 flex items-center bg-red-100 px-2 py-1 rounded ml-2"
+                          onClick={() => removePost(item.id, data, setData)}
+                        >
+                          <Trash size={16} />
+                          <span className="ml-1 text-sm font-medium">
+                            Unbookmark
+                          </span>
+                        </button>
+                      ) : (
+                        <button
+                          className="text-blue-500 hover:text-blue-700 flex items-center bg-blue-100 px-2 py-1 rounded ml-2"
+                          onClick={() => savePost(item, data, setData)}
+                        >
+                          <Bookmark size={16} />
+                          <span className="ml-1 text-sm font-medium">
+                            Bookmark
+                          </span>
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800 hover:dark:bg-opacity-30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore the Next.js 13 playground.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
+            <CustomPagination
+              currentPage={currentPage}
+              handlePageChange={handlePageChange}
+              startIndex={Math.max(currentPage - 1, 1)}
+              endIndex={Math.min(currentPage + 1, totalPages)}
+              totalPages={totalPages}
+              searchTerm={searchTerm}
+            />
+          </>
+        )}
       </div>
     </main>
-  )
+  );
 }
